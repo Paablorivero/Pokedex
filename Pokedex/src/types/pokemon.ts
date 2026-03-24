@@ -8,6 +8,7 @@ export interface Pokemon {
     nombre: string;
     urlStats: string;
     generation: number;
+    types: string[];
     images: {
         front: string;
         back: string;

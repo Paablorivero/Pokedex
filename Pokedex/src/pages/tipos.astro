@@ -1,0 +1,318 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { PokeService } from '../services/pokemon.service';
+import { getTypeInfo } from '../data/type-config';
+
+const typeRelations = await PokeService.getTypeRelations();
+---
+
+<Layout title="Equivalencias de Tipo - Pokédex" description="Tabla de fortalezas y debilidades por tipo Pokémon.">
+    <main class="tipos-page">
+        <header class="tipos-header">
+            <div class="header-top">
+                <a href="/pokedex" class="back-link" aria-label="Volver a la Pokédex">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"/>
+                    </svg>
+                </a>
+                <div class="header-info">
+                    <h1>Equivalencias de Tipo</h1>
+                    <p class="tipo-subtitle">Fortalezas, debilidades e inmunidades</p>
+                </div>
+            </div>
+        </header>
+
+        <section class="tipos-grid">
+            {typeRelations.map(tr => {
+                const info = getTypeInfo(tr.name);
+                return (
+                    <article class="type-card" style={`--type-color: ${info.color};`}>
+                        <div class="type-card-header">
+                            <span class="type-icon">{info.icon}</span>
+                            <h2 class="type-name">{info.nameEs}</h2>
+                        </div>
+
+                        <div class="relations">
+                            {tr.double_damage_to.length > 0 && (
+                                <div class="relation-group">
+                                    <h3 class="relation-label strong">Fuerte contra <span class="mult">×2</span></h3>
+                                    <div class="relation-badges">
+                                        {tr.double_damage_to.map(t => {
+                                            const ti = getTypeInfo(t);
+                                            return <span class="rel-badge" style={`--badge-color: ${ti.color};`}><span class="rel-dot"></span>{ti.nameEs}</span>;
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
+                            {tr.half_damage_to.length > 0 && (
+                                <div class="relation-group">
+                                    <h3 class="relation-label weak">Poco eficaz contra <span class="mult">×½</span></h3>
+                                    <div class="relation-badges">
+                                        {tr.half_damage_to.map(t => {
+                                            const ti = getTypeInfo(t);
+                                            return <span class="rel-badge" style={`--badge-color: ${ti.color};`}><span class="rel-dot"></span>{ti.nameEs}</span>;
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
+                            {tr.no_damage_to.length > 0 && (
+                                <div class="relation-group">
+                                    <h3 class="relation-label immune">Sin efecto contra <span class="mult">×0</span></h3>
+                                    <div class="relation-badges">
+                                        {tr.no_damage_to.map(t => {
+                                            const ti = getTypeInfo(t);
+                                            return <span class="rel-badge" style={`--badge-color: ${ti.color};`}><span class="rel-dot"></span>{ti.nameEs}</span>;
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
+                            {tr.double_damage_from.length > 0 && (
+                                <div class="relation-group">
+                                    <h3 class="relation-label vulnerable">Débil contra <span class="mult">×2</span></h3>
+                                    <div class="relation-badges">
+                                        {tr.double_damage_from.map(t => {
+                                            const ti = getTypeInfo(t);
+                                            return <span class="rel-badge" style={`--badge-color: ${ti.color};`}><span class="rel-dot"></span>{ti.nameEs}</span>;
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
+                            {tr.half_damage_from.length > 0 && (
+                                <div class="relation-group">
+                                    <h3 class="relation-label resist">Resistente a <span class="mult">×½</span></h3>
+                                    <div class="relation-badges">
+                                        {tr.half_damage_from.map(t => {
+                                            const ti = getTypeInfo(t);
+                                            return <span class="rel-badge" style={`--badge-color: ${ti.color};`}><span class="rel-dot"></span>{ti.nameEs}</span>;
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
+                            {tr.no_damage_from.length > 0 && (
+                                <div class="relation-group">
+                                    <h3 class="relation-label total-immune">Inmune a <span class="mult">×0</span></h3>
+                                    <div class="relation-badges">
+                                        {tr.no_damage_from.map(t => {
+                                            const ti = getTypeInfo(t);
+                                            return <span class="rel-badge" style={`--badge-color: ${ti.color};`}><span class="rel-dot"></span>{ti.nameEs}</span>;
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </article>
+                );
+            })}
+        </section>
+    </main>
+</Layout>
+
+<style>
+    .tipos-page {
+        min-height: 100vh;
+        background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+        padding-bottom: 3rem;
+    }
+
+    .tipos-header {
+        background: linear-gradient(135deg, #DC0A2D 0%, #a00820 100%);
+        padding: 1.5rem 2rem 1.2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        position: relative;
+    }
+
+    .tipos-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #333 0%, #555 50%, #333 100%);
+    }
+
+    .header-top {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .back-link {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.15);
+        color: #fff;
+        text-decoration: none;
+        transition: background 0.2s;
+        flex-shrink: 0;
+    }
+
+    .back-link:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+
+    .back-link svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .header-info h1 {
+        margin: 0;
+        font-size: 1.8rem;
+        color: #fff;
+        font-weight: 800;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .tipo-subtitle {
+        margin: 0.2rem 0 0;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.9rem;
+    }
+
+    .tipos-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+        gap: 1.2rem;
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 2rem;
+    }
+
+    .type-card {
+        background: linear-gradient(145deg, #2a2a4a 0%, #1e1e38 100%);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 16px;
+        overflow: hidden;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .type-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .type-card-header {
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+        padding: 1rem 1.2rem;
+        background: var(--type-color);
+        position: relative;
+    }
+
+    .type-card-header::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent 60%);
+        pointer-events: none;
+    }
+
+    .type-icon {
+        font-size: 1.5rem;
+        line-height: 1;
+    }
+
+    .type-name {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #fff;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        margin: 0;
+    }
+
+    .relations {
+        padding: 1rem 1.2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+
+    .relation-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+    }
+
+    .relation-label {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        font-weight: 700;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .relation-label .mult {
+        font-size: 0.65rem;
+        opacity: 0.5;
+        font-weight: 600;
+    }
+
+    .relation-label.strong      { color: #4ade80; }
+    .relation-label.weak        { color: #fb923c; }
+    .relation-label.immune      { color: #94a3b8; }
+    .relation-label.vulnerable  { color: #f87171; }
+    .relation-label.resist      { color: #60a5fa; }
+    .relation-label.total-immune { color: #c084fc; }
+
+    .relation-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.3rem;
+    }
+
+    .rel-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.25rem 0.6rem 0.25rem 0.45rem;
+        border-radius: 6px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.85);
+        background: rgba(255, 255, 255, 0.07);
+        border-left: 3px solid var(--badge-color);
+        white-space: nowrap;
+    }
+
+    .rel-dot {
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--badge-color);
+        flex-shrink: 0;
+    }
+
+    @media (max-width: 600px) {
+        .tipos-header {
+            padding: 1.2rem 1rem 1rem;
+        }
+
+        .header-info h1 {
+            font-size: 1.3rem;
+        }
+
+        .tipos-grid {
+            grid-template-columns: 1fr;
+            padding: 0 1rem;
+            gap: 1rem;
+        }
+    }
+</style>

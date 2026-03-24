@@ -2,6 +2,16 @@ import type { Pokemon, FrontSprite } from '../types/pokemon';
 
 export type { Pokemon };
 
+export interface TypeRelations {
+    name: string;
+    double_damage_to: string[];
+    double_damage_from: string[];
+    half_damage_to: string[];
+    half_damage_from: string[];
+    no_damage_to: string[];
+    no_damage_from: string[];
+}
+
 const GEN_RANGES: [number, number][] = [
     [1, 151],     // Gen 1
     [152, 251],   // Gen 2
@@ -87,6 +97,7 @@ export const  PokeService = {
                     id: data.id,
                     nombre: data.name,
                     generation: getGeneration(data.id),
+                    types: data.types.map((t: any) => t.type.name as string),
                     urlStats: `${this.BASE_URL}/${data.id}`,
                     images: {
                         front: `${this.IMAGEN_URL_FRONT}${data.id}.gif`,
@@ -109,5 +120,30 @@ export const  PokeService = {
 
         console.log("Se han descargado todos los pokemon");
         return pokemons;
+    },
+
+    async getTypeRelations(): Promise<TypeRelations[]> {
+        const TYPE_URL = 'https://pokeapi.co/api/v2/type';
+        const typeIds = Array.from({ length: 18 }, (_, i) => i + 1);
+
+        const promises = typeIds.map(id =>
+            fetch(`${TYPE_URL}/${id}`)
+                .then(res => res.ok ? res.json() : null)
+                .catch(() => null)
+        );
+
+        const results = await Promise.all(promises);
+
+        return results
+            .filter(Boolean)
+            .map((data: any) => ({
+                name: data.name,
+                double_damage_to: data.damage_relations.double_damage_to.map((t: any) => t.name),
+                double_damage_from: data.damage_relations.double_damage_from.map((t: any) => t.name),
+                half_damage_to: data.damage_relations.half_damage_to.map((t: any) => t.name),
+                half_damage_from: data.damage_relations.half_damage_from.map((t: any) => t.name),
+                no_damage_to: data.damage_relations.no_damage_to.map((t: any) => t.name),
+                no_damage_from: data.damage_relations.no_damage_from.map((t: any) => t.name),
+            }));
     }
 }

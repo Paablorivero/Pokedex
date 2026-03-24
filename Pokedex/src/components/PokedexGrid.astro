@@ -1,8 +1,10 @@
 ---
 import { PokeService } from '../services/pokemon.service';
 import PokemonCard from './PokemonCard.astro';
+import { TYPE_CONFIG } from '../data/type-config';
 
 const pokemons = await PokeService.getPokedex();
+const allTypes = Object.values(TYPE_CONFIG);
 ---
 
 <main class="pokedex">
@@ -26,6 +28,21 @@ const pokemons = await PokeService.getPokedex();
         </div>
         <p class="instruction">Pulsa un Pokémon para ver sus estadísticas</p>
     </header>
+
+    <section class="type-legend">
+        <div class="legend-container">
+            <h3 class="legend-title">Tipos</h3>
+            <div class="legend-items">
+                {allTypes.map(ti => (
+                    <div class="legend-item">
+                        <span class="legend-badge" style={`background-color: ${ti.color};`}>{ti.icon}</span>
+                        <span class="legend-name">{ti.nameEs}</span>
+                    </div>
+                ))}
+            </div>
+            <a href="/tipos" class="legend-link">Ver equivalencias de tipo →</a>
+        </div>
+    </section>
 
     <section class="filters-bar">
         <div class="filters-container">
@@ -315,6 +332,73 @@ const pokemons = await PokeService.getPokedex();
         white-space: nowrap;
     }
 
+    /* ---- Type legend ---- */
+    .type-legend {
+        max-width: 1400px;
+        margin: 0 auto 1.5rem;
+        padding: 0 2rem;
+    }
+
+    .legend-container {
+        background: linear-gradient(145deg, #2a2a4a 0%, #1e1e38 100%);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 16px;
+        padding: 1rem 1.5rem;
+    }
+
+    .legend-title {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: rgba(255, 255, 255, 0.4);
+        font-weight: 600;
+        margin: 0 0 0.7rem;
+    }
+
+    .legend-items {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem 1rem;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    .legend-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        font-size: 0.65rem;
+        line-height: 1;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .legend-name {
+        font-size: 0.78rem;
+        color: rgba(255, 255, 255, 0.6);
+        font-weight: 500;
+    }
+
+    .legend-link {
+        display: inline-block;
+        margin-top: 0.7rem;
+        font-size: 0.78rem;
+        color: #DC0A2D;
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.2s;
+    }
+
+    .legend-link:hover {
+        color: #ff4d4d;
+    }
+
     .no-results {
         text-align: center;
         color: rgba(255, 255, 255, 0.4);
@@ -341,7 +425,8 @@ const pokemons = await PokeService.getPokedex();
             text-align: center;
         }
 
-        .filters-bar {
+        .filters-bar,
+        .type-legend {
             padding: 0 1rem;
         }
 
@@ -352,6 +437,14 @@ const pokemons = await PokeService.getPokedex();
 
         .filter-group {
             min-width: unset;
+        }
+
+        .legend-container {
+            padding: 0.8rem 1rem;
+        }
+
+        .legend-items {
+            gap: 0.4rem 0.8rem;
         }
 
         .pokedex-grid {

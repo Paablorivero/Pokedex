@@ -1,21 +1,37 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { PokeService } from '../../services/pokemon.service';
+import { PokeService, type TypeRelations } from '../../services/pokemon.service';
 import type { Pokemon } from '../../types/pokemon';
+import { getTypeInfo, ALL_TYPE_NAMES } from '../../data/type-config';
 
 export async function getStaticPaths() {
-    const pokemons = await PokeService.getPokedex();
+    const [pokemons, allTypeRelations] = await Promise.all([
+        PokeService.getPokedex(),
+        PokeService.getTypeRelations(),
+    ]);
+
+    const typeRelMap = new Map<string, TypeRelations>();
+    for (const tr of allTypeRelations) {
+        typeRelMap.set(tr.name, tr);
+    }
+
     return pokemons.map((pokemon) => ({
         params: { id: pokemon.id.toString() },
-        props: { pokemon },
+        props: {
+            pokemon,
+            typeRelations: pokemon.types
+                .map(t => typeRelMap.get(t))
+                .filter(Boolean) as TypeRelations[],
+        },
     }));
 }
 
 interface Props {
     pokemon: Pokemon;
+    typeRelations: TypeRelations[];
 }
 
-const { pokemon } = Astro.props;
+const { pokemon, typeRelations } = Astro.props;
 
 const MAX_STAT = 255;
 
@@ -27,6 +43,28 @@ const statConfig = [
     { label: 'Def. Esp.', key: 'specialDefense' as const, color: '#A7DB8D' },
     { label: 'Velocidad', key: 'speed' as const,          color: '#FA92B2' },
 ];
+
+// --- Combined type matchup calculation ---
+function getDefensiveMultiplier(atkType: string, rels: TypeRelations[]): number {
+    let mult = 1;
+    for (const rel of rels) {
+        if (rel.double_damage_from.includes(atkType)) mult *= 2;
+        else if (rel.half_damage_from.includes(atkType)) mult *= 0.5;
+        else if (rel.no_damage_from.includes(atkType)) mult *= 0;
+    }
+    return mult;
+}
+
+const defenseByMult: Record<string, string[]> = { '4': [], '2': [], '0.5': [], '0.25': [], '0': [] };
+for (const atkType of ALL_TYPE_NAMES) {
+    const m = getDefensiveMultiplier(atkType, typeRelations);
+    const key = String(m);
+    if (key in defenseByMult) defenseByMult[key].push(atkType);
+}
+
+const offenseStrong = [...new Set(typeRelations.flatMap(tr => tr.double_damage_to))];
+const offenseWeak = [...new Set(typeRelations.flatMap(tr => tr.half_damage_to))].filter(t => !offenseStrong.includes(t));
+const offenseNone = [...new Set(typeRelations.flatMap(tr => tr.no_damage_to))].filter(t => !offenseStrong.includes(t) && !offenseWeak.includes(t));
 
 ---
 
@@ -60,6 +98,16 @@ const statConfig = [
 
         <section class="info-panel">
             <h1 class="pokemon-name">{pokemon.nombre}</h1>
+            <div class="detail-type-badges">
+                {pokemon.types.map(t => {
+                    const ti = getTypeInfo(t);
+                    return (
+                        <span class="detail-type-badge" style={`background-color: ${ti.color};`}>
+                            {ti.icon} {ti.nameEs}
+                        </span>
+                    );
+                })}
+            </div>
 
             <div class="two-columns">
                 <div class="col-left">
@@ -87,27 +135,104 @@ const statConfig = [
                 </div>
 
                 <div class="col-right">
-                    {pokemon.frontSprites.length > 0 && (
-                        <div class="sprites-section">
-                            <h2 class="section-title">Estilos</h2>
-                            <div class="sprites-gallery">
-                                {pokemon.frontSprites.map((sprite) => (
-                                    <button class="sprite-item" data-src={sprite.url} data-label={`${pokemon.nombre} - ${sprite.label}`}>
-                                        <img 
-                                            src={sprite.url}
-                                            alt={`${pokemon.nombre} - ${sprite.label}`}
-                                            loading="lazy"
-                                            decoding="async"
-                                            onerror="this.closest('.sprite-item').style.display='none';"
-                                        />
-                                        <span class="sprite-label">{sprite.label}</span>
-                                        <span class="preview-icon" aria-hidden="true">
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/>
-                                            </svg>
-                                        </span>
-                                    </button>
-                                ))}
+                    {typeRelations.length > 0 && (
+                        <div class="type-matchups">
+                            <h2 class="section-title">Equivalencias de Tipo</h2>
+
+                            <div class="matchup-group">
+                                <h3 class="matchup-subtitle">Atacando</h3>
+                                {offenseStrong.length > 0 && (
+                                    <div class="matchup-row">
+                                        <span class="matchup-label m-strong">Fuerte contra ×2</span>
+                                        <div class="matchup-badges">
+                                            {offenseStrong.map(t => {
+                                                const ti = getTypeInfo(t);
+                                                return <span class="m-badge" style={`--badge-color:${ti.color};`}><span class="m-dot"></span>{ti.nameEs}</span>;
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+                                {offenseWeak.length > 0 && (
+                                    <div class="matchup-row">
+                                        <span class="matchup-label m-weak">Poco eficaz ×½</span>
+                                        <div class="matchup-badges">
+                                            {offenseWeak.map(t => {
+                                                const ti = getTypeInfo(t);
+                                                return <span class="m-badge" style={`--badge-color:${ti.color};`}><span class="m-dot"></span>{ti.nameEs}</span>;
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+                                {offenseNone.length > 0 && (
+                                    <div class="matchup-row">
+                                        <span class="matchup-label m-immune">Sin efecto ×0</span>
+                                        <div class="matchup-badges">
+                                            {offenseNone.map(t => {
+                                                const ti = getTypeInfo(t);
+                                                return <span class="m-badge" style={`--badge-color:${ti.color};`}><span class="m-dot"></span>{ti.nameEs}</span>;
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div class="matchup-group">
+                                <h3 class="matchup-subtitle">Defendiendo</h3>
+                                {defenseByMult['4'].length > 0 && (
+                                    <div class="matchup-row">
+                                        <span class="matchup-label m-very-vulnerable">Muy débil ×4</span>
+                                        <div class="matchup-badges">
+                                            {defenseByMult['4'].map(t => {
+                                                const ti = getTypeInfo(t);
+                                                return <span class="m-badge" style={`--badge-color:${ti.color};`}><span class="m-dot"></span>{ti.nameEs}</span>;
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+                                {defenseByMult['2'].length > 0 && (
+                                    <div class="matchup-row">
+                                        <span class="matchup-label m-vulnerable">Débil ×2</span>
+                                        <div class="matchup-badges">
+                                            {defenseByMult['2'].map(t => {
+                                                const ti = getTypeInfo(t);
+                                                return <span class="m-badge" style={`--badge-color:${ti.color};`}><span class="m-dot"></span>{ti.nameEs}</span>;
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+                                {defenseByMult['0.5'].length > 0 && (
+                                    <div class="matchup-row">
+                                        <span class="matchup-label m-resist">Resistente ×½</span>
+                                        <div class="matchup-badges">
+                                            {defenseByMult['0.5'].map(t => {
+                                                const ti = getTypeInfo(t);
+                                                return <span class="m-badge" style={`--badge-color:${ti.color};`}><span class="m-dot"></span>{ti.nameEs}</span>;
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+                                {defenseByMult['0.25'].length > 0 && (
+                                    <div class="matchup-row">
+                                        <span class="matchup-label m-very-resist">Muy resistente ×¼</span>
+                                        <div class="matchup-badges">
+                                            {defenseByMult['0.25'].map(t => {
+                                                const ti = getTypeInfo(t);
+                                                return <span class="m-badge" style={`--badge-color:${ti.color};`}><span class="m-dot"></span>{ti.nameEs}</span>;
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+                                {defenseByMult['0'].length > 0 && (
+                                    <div class="matchup-row">
+                                        <span class="matchup-label m-total-immune">Inmune ×0</span>
+                                        <div class="matchup-badges">
+                                            {defenseByMult['0'].map(t => {
+                                                const ti = getTypeInfo(t);
+                                                return <span class="m-badge" style={`--badge-color:${ti.color};`}><span class="m-dot"></span>{ti.nameEs}</span>;
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
@@ -131,50 +256,6 @@ const statConfig = [
             </div>
         </section>
 
-        <div class="lightbox" id="lightbox" aria-hidden="true">
-            <div class="lightbox-backdrop"></div>
-            <div class="lightbox-content">
-                <button class="lightbox-close" aria-label="Cerrar vista previa">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                    </svg>
-                </button>
-                <img id="lightbox-img" src="" alt="" />
-                <p class="lightbox-label" id="lightbox-label"></p>
-            </div>
-        </div>
-    </main>
-</Layout>
-
-<script>
-    const lightbox = document.getElementById('lightbox')!;
-    const lbImg = document.getElementById('lightbox-img') as HTMLImageElement;
-    const lbLabel = document.getElementById('lightbox-label')!;
-    const lbClose = lightbox.querySelector('.lightbox-close')!;
-    const lbBackdrop = lightbox.querySelector('.lightbox-backdrop')!;
-
-    document.querySelectorAll<HTMLButtonElement>('.sprite-item[data-src]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            lbImg.src = btn.dataset.src || '';
-            lbImg.alt = btn.dataset.label || '';
-            lbLabel.textContent = btn.dataset.label || '';
-            lightbox.classList.add('active');
-            lightbox.setAttribute('aria-hidden', 'false');
-        });
-    });
-
-    function closeLightbox() {
-        lightbox.classList.remove('active');
-        lightbox.setAttribute('aria-hidden', 'true');
-        lbImg.src = '';
-    }
-
-    lbClose.addEventListener('click', closeLightbox);
-    lbBackdrop.addEventListener('click', closeLightbox);
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeLightbox();
-    });
-</script>
     </main>
 </Layout>
 
@@ -309,77 +390,6 @@ const statConfig = [
         font-weight: 600;
     }
 
-    /* ---- Sprites gallery ---- */
-    .sprites-section {
-        background: linear-gradient(145deg, #2a2a4a 0%, #1e1e38 100%);
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        border-radius: 20px;
-        padding: 1.5rem;
-        height: 100%;
-    }
-
-    .sprites-gallery {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-        gap: 0.8rem;
-    }
-
-    .sprite-item {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 0.5rem;
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        border-radius: 12px;
-        padding: 0.7rem 0.4rem;
-        transition: border-color 0.2s, transform 0.2s;
-        cursor: pointer;
-        position: relative;
-        font-family: inherit;
-        color: inherit;
-    }
-
-    .sprite-item:hover {
-        border-color: rgba(220, 10, 45, 0.3);
-        transform: translateY(-2px);
-    }
-
-    .sprite-item img {
-        width: 70px;
-        height: 70px;
-        object-fit: contain;
-        image-rendering: auto;
-        filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.3));
-    }
-
-    .sprite-label {
-        font-size: 0.65rem;
-        color: rgba(255, 255, 255, 0.45);
-        text-align: center;
-        font-weight: 500;
-        line-height: 1.2;
-    }
-
-    .preview-icon {
-        position: absolute;
-        top: 6px;
-        right: 6px;
-        width: 18px;
-        height: 18px;
-        color: rgba(255, 255, 255, 0.15);
-        transition: color 0.2s;
-    }
-
-    .preview-icon svg {
-        width: 100%;
-        height: 100%;
-    }
-
-    .sprite-item:hover .preview-icon {
-        color: rgba(220, 10, 45, 0.6);
-    }
-
     /* ---- Stats ---- */
     .stats-section {
         background: linear-gradient(145deg, #2a2a4a 0%, #1e1e38 100%);
@@ -429,92 +439,107 @@ const statConfig = [
         transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* ---- Lightbox ---- */
-    .lightbox {
-        position: fixed;
-        inset: 0;
-        z-index: 1000;
+    /* ---- Detail type badges (below name) ---- */
+    .detail-type-badges {
         display: flex;
-        align-items: center;
         justify-content: center;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.25s ease;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
     }
 
-    .lightbox.active {
-        opacity: 1;
-        pointer-events: auto;
+    .detail-type-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.3rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #fff;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     }
 
-    .lightbox-backdrop {
-        position: absolute;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.8);
-        backdrop-filter: blur(6px);
+    /* ---- Type matchups (combined) ---- */
+    .type-matchups {
+        background: linear-gradient(145deg, #2a2a4a 0%, #1e1e38 100%);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 20px;
+        padding: 1.5rem;
     }
 
-    .lightbox-content {
-        position: relative;
+    .matchup-group {
+        margin-bottom: 1rem;
+    }
+
+    .matchup-group:last-child {
+        margin-bottom: 0;
+    }
+
+    .matchup-subtitle {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: rgba(255, 255, 255, 0.55);
+        font-weight: 700;
+        margin: 0 0 0.6rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .matchup-row {
         display: flex;
         flex-direction: column;
-        align-items: center;
-        gap: 1rem;
-        background: linear-gradient(145deg, #2a2a4a 0%, #1e1e38 100%);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 24px;
-        padding: 2rem;
-        max-width: 90vw;
-        max-height: 90vh;
-        transform: scale(0.9);
-        transition: transform 0.25s ease;
+        gap: 0.25rem;
+        margin-bottom: 0.5rem;
     }
 
-    .lightbox.active .lightbox-content {
-        transform: scale(1);
+    .matchup-row:last-child {
+        margin-bottom: 0;
     }
 
-    .lightbox-content img {
-        max-width: 320px;
-        max-height: 320px;
-        width: auto;
-        height: auto;
-        object-fit: contain;
-        filter: drop-shadow(0 4px 20px rgba(0, 0, 0, 0.5));
+    .matchup-label {
+        font-size: 0.68rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        font-weight: 700;
     }
 
-    .lightbox-label {
-        font-size: 0.9rem;
-        color: rgba(255, 255, 255, 0.6);
-        text-transform: capitalize;
-        font-weight: 500;
-    }
+    .matchup-label.m-strong        { color: #4ade80; }
+    .matchup-label.m-weak          { color: #fb923c; }
+    .matchup-label.m-immune        { color: #94a3b8; }
+    .matchup-label.m-very-vulnerable { color: #ef4444; }
+    .matchup-label.m-vulnerable    { color: #f87171; }
+    .matchup-label.m-resist        { color: #60a5fa; }
+    .matchup-label.m-very-resist   { color: #34d399; }
+    .matchup-label.m-total-immune  { color: #c084fc; }
 
-    .lightbox-close {
-        position: absolute;
-        top: 12px;
-        right: 12px;
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        border: none;
-        background: rgba(255, 255, 255, 0.08);
-        color: rgba(255, 255, 255, 0.6);
-        cursor: pointer;
+    .matchup-badges {
         display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
+
+    .m-badge {
+        display: inline-flex;
         align-items: center;
-        justify-content: center;
-        transition: background 0.2s, color 0.2s;
+        gap: 0.3rem;
+        padding: 0.2rem 0.55rem 0.2rem 0.4rem;
+        border-radius: 6px;
+        font-size: 0.65rem;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.85);
+        background: rgba(255, 255, 255, 0.07);
+        border-left: 3px solid var(--badge-color);
+        white-space: nowrap;
     }
 
-    .lightbox-close:hover {
-        background: rgba(220, 10, 45, 0.3);
-        color: #fff;
-    }
-
-    .lightbox-close svg {
-        width: 18px;
-        height: 18px;
+    .m-dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--badge-color);
+        flex-shrink: 0;
     }
 
     /* ---- Prev / Next navigation ---- */

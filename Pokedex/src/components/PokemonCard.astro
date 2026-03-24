@@ -1,15 +1,25 @@
 ---
 import type { Pokemon } from '../types/pokemon';
+import { getTypeInfo } from '../data/type-config';
 
 interface Props {
     pokemon: Pokemon;
 }
 
 const { pokemon } = Astro.props;
+const typeInfos = pokemon.types.map(t => getTypeInfo(t));
 ---
 
 <a href={`/pokemon/${pokemon.id}`} class="card-link" data-name={pokemon.nombre.toLowerCase()} data-gen={pokemon.generation}> 
     <article class="pokemon-card">
+        <div class="type-icons">
+            {typeInfos.map(ti => (
+                <span class="type-badge" style={`background-color: ${ti.color};`} title={ti.nameEs}>
+                    {ti.icon}
+                </span>
+            ))}
+        </div>
+
         <span class="pokemon-id">#{pokemon.id.toString().padStart(3, '0')}</span>
 
         <div class="sprite-area">
@@ -145,6 +155,28 @@ const { pokemon } = Astro.props;
         margin: 0.6rem 0 0;
         font-weight: 700;
         color: #e8e8e8;
+    }
+
+    .type-icons {
+        position: absolute;
+        top: 8px;
+        left: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+        z-index: 3;
+    }
+
+    .type-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        font-size: 0.65rem;
+        line-height: 1;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
     }
 
     .view-hint {
