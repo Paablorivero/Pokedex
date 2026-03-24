@@ -27,12 +27,76 @@ const pokemons = await PokeService.getPokedex();
         <p class="instruction">Pulsa un Pokémon para ver sus estadísticas</p>
     </header>
 
-    <section class="pokedex-grid">
+    <section class="filters-bar">
+        <div class="filters-container">
+            <div class="filter-group">
+                <label for="name-filter" class="filter-label">Buscar</label>
+                <div class="search-input-wrapper">
+                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                    <input type="text" id="name-filter" placeholder="Nombre del Pokémon..." autocomplete="off" />
+                </div>
+            </div>
+            <div class="filter-group">
+                <label for="gen-filter" class="filter-label">Generación</label>
+                <select id="gen-filter">
+                    <option value="all">Todas</option>
+                    <option value="1">1ª Gen (1-151)</option>
+                    <option value="2">2ª Gen (152-251)</option>
+                    <option value="3">3ª Gen (252-386)</option>
+                    <option value="4">4ª Gen (387-493)</option>
+                    <option value="5">5ª Gen (494-649)</option>
+                    <option value="6">6ª Gen (650-721)</option>
+                    <option value="7">7ª Gen (722-809)</option>
+                    <option value="8">8ª Gen (810-905)</option>
+                    <option value="9">9ª Gen (906-1025)</option>
+                </select>
+            </div>
+            <p class="results-count" id="results-count"></p>
+        </div>
+    </section>
+
+    <section class="pokedex-grid" id="pokedex-grid">
         {pokemons.map((poke) => (
             <PokemonCard pokemon={poke} />
         ))}
     </section>
+
+    <p class="no-results" id="no-results" style="display:none;">No se encontraron Pokémon con esos filtros.</p>
 </main>
+
+<script>
+    const nameInput = document.getElementById('name-filter') as HTMLInputElement;
+    const genSelect = document.getElementById('gen-filter') as HTMLSelectElement;
+    const grid = document.getElementById('pokedex-grid')!;
+    const cards = Array.from(grid.querySelectorAll<HTMLAnchorElement>('.card-link'));
+    const countEl = document.getElementById('results-count')!;
+    const noResults = document.getElementById('no-results')!;
+
+    function applyFilters() {
+        const nameQuery = nameInput.value.toLowerCase().trim();
+        const genValue = genSelect.value;
+        let visible = 0;
+
+        for (const card of cards) {
+            const name = card.dataset.name || '';
+            const gen = card.dataset.gen || '';
+            const matchesName = !nameQuery || name.includes(nameQuery);
+            const matchesGen = genValue === 'all' || gen === genValue;
+            const show = matchesName && matchesGen;
+            (card as HTMLElement).style.display = show ? '' : 'none';
+            if (show) visible++;
+        }
+
+        countEl.textContent = `${visible} resultado${visible !== 1 ? 's' : ''}`;
+        noResults.style.display = visible === 0 ? '' : 'none';
+    }
+
+    nameInput.addEventListener('input', applyFilters);
+    genSelect.addEventListener('change', applyFilters);
+    applyFilters();
+</script>
 
 <style>
     .pokedex {
@@ -148,6 +212,116 @@ const pokemons = await PokeService.getPokedex();
         padding-left: 104px;
     }
 
+    /* ---- Filters ---- */
+    .filters-bar {
+        max-width: 1400px;
+        margin: 0 auto 1.5rem;
+        padding: 0 2rem;
+    }
+
+    .filters-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: flex-end;
+        background: linear-gradient(145deg, #2a2a4a 0%, #1e1e38 100%);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 16px;
+        padding: 1.2rem 1.5rem;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        flex: 1;
+        min-width: 180px;
+    }
+
+    .filter-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: rgba(255, 255, 255, 0.4);
+        font-weight: 600;
+    }
+
+    .search-input-wrapper {
+        position: relative;
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 16px;
+        height: 16px;
+        color: rgba(255, 255, 255, 0.3);
+        pointer-events: none;
+    }
+
+    #name-filter {
+        width: 100%;
+        padding: 0.6rem 0.8rem 0.6rem 2.4rem;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        color: #e8e8e8;
+        font-size: 0.9rem;
+        outline: none;
+        transition: border-color 0.2s, background 0.2s;
+        box-sizing: border-box;
+    }
+
+    #name-filter::placeholder {
+        color: rgba(255, 255, 255, 0.25);
+    }
+
+    #name-filter:focus {
+        border-color: #DC0A2D;
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    #gen-filter {
+        padding: 0.6rem 0.8rem;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        color: #e8e8e8;
+        font-size: 0.9rem;
+        outline: none;
+        cursor: pointer;
+        transition: border-color 0.2s;
+        box-sizing: border-box;
+        width: 100%;
+    }
+
+    #gen-filter:focus {
+        border-color: #DC0A2D;
+    }
+
+    #gen-filter option {
+        background: #1e1e38;
+        color: #e8e8e8;
+    }
+
+    .results-count {
+        margin: 0;
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.35);
+        align-self: flex-end;
+        padding-bottom: 0.3rem;
+        white-space: nowrap;
+    }
+
+    .no-results {
+        text-align: center;
+        color: rgba(255, 255, 255, 0.4);
+        font-size: 1rem;
+        padding: 3rem 1rem;
+    }
+
     .pokedex-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
@@ -165,6 +339,19 @@ const pokemons = await PokeService.getPokedex();
         .instruction {
             padding-left: 0;
             text-align: center;
+        }
+
+        .filters-bar {
+            padding: 0 1rem;
+        }
+
+        .filters-container {
+            flex-direction: column;
+            padding: 1rem;
+        }
+
+        .filter-group {
+            min-width: unset;
         }
 
         .pokedex-grid {

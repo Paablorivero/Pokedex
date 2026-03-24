@@ -61,26 +61,56 @@ const statConfig = [
         <section class="info-panel">
             <h1 class="pokemon-name">{pokemon.nombre}</h1>
 
-            <div class="stats-section">
-                <h2 class="stats-title">Estadísticas Base</h2>
+            <div class="two-columns">
+                <div class="col-left">
+                    <div class="stats-section">
+                        <h2 class="section-title">Estadísticas Base</h2>
+                        <div class="stats-list">
+                            {statConfig.map((stat) => {
+                                const value = pokemon.stats[stat.key];
+                                const pct = Math.round((value / MAX_STAT) * 100);
+                                return (
+                                    <div class="stat-row">
+                                        <span class="stat-label">{stat.label}</span>
+                                        <span class="stat-value">{value}</span>
+                                        <div class="bar-track">
+                                            <div 
+                                                class="bar-fill"
+                                                style={`width: ${pct}%; background-color: ${stat.color};`}
+                                            />
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
 
-                <div class="stats-list">
-                    {statConfig.map((stat) => {
-                        const value = pokemon.stats[stat.key];
-                        const pct = Math.round((value / MAX_STAT) * 100);
-                        return (
-                            <div class="stat-row">
-                                <span class="stat-label">{stat.label}</span>
-                                <span class="stat-value">{value}</span>
-                                <div class="bar-track">
-                                    <div 
-                                        class="bar-fill"
-                                        style={`width: ${pct}%; background-color: ${stat.color};`}
-                                    />
-                                </div>
+                <div class="col-right">
+                    {pokemon.frontSprites.length > 0 && (
+                        <div class="sprites-section">
+                            <h2 class="section-title">Estilos</h2>
+                            <div class="sprites-gallery">
+                                {pokemon.frontSprites.map((sprite) => (
+                                    <button class="sprite-item" data-src={sprite.url} data-label={`${pokemon.nombre} - ${sprite.label}`}>
+                                        <img 
+                                            src={sprite.url}
+                                            alt={`${pokemon.nombre} - ${sprite.label}`}
+                                            loading="lazy"
+                                            decoding="async"
+                                            onerror="this.closest('.sprite-item').style.display='none';"
+                                        />
+                                        <span class="sprite-label">{sprite.label}</span>
+                                        <span class="preview-icon" aria-hidden="true">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/>
+                                            </svg>
+                                        </span>
+                                    </button>
+                                ))}
                             </div>
-                        );
-                    })}
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -92,7 +122,7 @@ const statConfig = [
                     </a>
                 )}
                 <span class="nav-spacer"></span>
-                {pokemon.id < 151 && (
+                {pokemon.id < 1350 && (
                     <a href={`/pokemon/${pokemon.id + 1}`} class="nav-link next">
                         #{(pokemon.id + 1).toString().padStart(3, '0')}
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>
@@ -100,6 +130,51 @@ const statConfig = [
                 )}
             </div>
         </section>
+
+        <div class="lightbox" id="lightbox" aria-hidden="true">
+            <div class="lightbox-backdrop"></div>
+            <div class="lightbox-content">
+                <button class="lightbox-close" aria-label="Cerrar vista previa">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+                <img id="lightbox-img" src="" alt="" />
+                <p class="lightbox-label" id="lightbox-label"></p>
+            </div>
+        </div>
+    </main>
+</Layout>
+
+<script>
+    const lightbox = document.getElementById('lightbox')!;
+    const lbImg = document.getElementById('lightbox-img') as HTMLImageElement;
+    const lbLabel = document.getElementById('lightbox-label')!;
+    const lbClose = lightbox.querySelector('.lightbox-close')!;
+    const lbBackdrop = lightbox.querySelector('.lightbox-backdrop')!;
+
+    document.querySelectorAll<HTMLButtonElement>('.sprite-item[data-src]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            lbImg.src = btn.dataset.src || '';
+            lbImg.alt = btn.dataset.label || '';
+            lbLabel.textContent = btn.dataset.label || '';
+            lightbox.classList.add('active');
+            lightbox.setAttribute('aria-hidden', 'false');
+        });
+    });
+
+    function closeLightbox() {
+        lightbox.classList.remove('active');
+        lightbox.setAttribute('aria-hidden', 'true');
+        lbImg.src = '';
+    }
+
+    lbClose.addEventListener('click', closeLightbox);
+    lbBackdrop.addEventListener('click', closeLightbox);
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeLightbox();
+    });
+</script>
     </main>
 </Layout>
 
@@ -197,7 +272,7 @@ const statConfig = [
 
     /* ---- Info panel ---- */
     .info-panel {
-        max-width: 600px;
+        max-width: 1100px;
         margin: 0 auto;
         padding: 0 2rem 3rem;
     }
@@ -211,21 +286,107 @@ const statConfig = [
         margin: 0 0 2rem;
     }
 
-    /* ---- Stats ---- */
-    .stats-section {
-        background: linear-gradient(145deg, #2a2a4a 0%, #1e1e38 100%);
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        border-radius: 20px;
-        padding: 1.5rem;
+    /* ---- Two-column layout ---- */
+    .two-columns {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        align-items: start;
     }
 
-    .stats-title {
+    .col-left,
+    .col-right {
+        min-width: 0;
+    }
+
+    /* ---- Shared section title ---- */
+    .section-title {
         font-size: 0.85rem;
         text-transform: uppercase;
         letter-spacing: 0.1em;
         color: rgba(255, 255, 255, 0.4);
         margin: 0 0 1.2rem;
         font-weight: 600;
+    }
+
+    /* ---- Sprites gallery ---- */
+    .sprites-section {
+        background: linear-gradient(145deg, #2a2a4a 0%, #1e1e38 100%);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 20px;
+        padding: 1.5rem;
+        height: 100%;
+    }
+
+    .sprites-gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 0.8rem;
+    }
+
+    .sprite-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 12px;
+        padding: 0.7rem 0.4rem;
+        transition: border-color 0.2s, transform 0.2s;
+        cursor: pointer;
+        position: relative;
+        font-family: inherit;
+        color: inherit;
+    }
+
+    .sprite-item:hover {
+        border-color: rgba(220, 10, 45, 0.3);
+        transform: translateY(-2px);
+    }
+
+    .sprite-item img {
+        width: 70px;
+        height: 70px;
+        object-fit: contain;
+        image-rendering: auto;
+        filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.3));
+    }
+
+    .sprite-label {
+        font-size: 0.65rem;
+        color: rgba(255, 255, 255, 0.45);
+        text-align: center;
+        font-weight: 500;
+        line-height: 1.2;
+    }
+
+    .preview-icon {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        width: 18px;
+        height: 18px;
+        color: rgba(255, 255, 255, 0.15);
+        transition: color 0.2s;
+    }
+
+    .preview-icon svg {
+        width: 100%;
+        height: 100%;
+    }
+
+    .sprite-item:hover .preview-icon {
+        color: rgba(220, 10, 45, 0.6);
+    }
+
+    /* ---- Stats ---- */
+    .stats-section {
+        background: linear-gradient(145deg, #2a2a4a 0%, #1e1e38 100%);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 20px;
+        padding: 1.5rem;
+        height: 100%;
     }
 
     .stats-list {
@@ -268,18 +429,92 @@ const statConfig = [
         transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .stat-total {
-        display: grid;
-        grid-template-columns: 90px 40px 1fr;
+    /* ---- Lightbox ---- */
+    .lightbox {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        display: flex;
         align-items: center;
-        gap: 0.8rem;
-        margin-top: 1rem;
-        padding-top: 1rem;
-        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        justify-content: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s ease;
     }
 
-    .total-value {
-        color: #58d0f8;
+    .lightbox.active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .lightbox-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(6px);
+    }
+
+    .lightbox-content {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        background: linear-gradient(145deg, #2a2a4a 0%, #1e1e38 100%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 24px;
+        padding: 2rem;
+        max-width: 90vw;
+        max-height: 90vh;
+        transform: scale(0.9);
+        transition: transform 0.25s ease;
+    }
+
+    .lightbox.active .lightbox-content {
+        transform: scale(1);
+    }
+
+    .lightbox-content img {
+        max-width: 320px;
+        max-height: 320px;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+        filter: drop-shadow(0 4px 20px rgba(0, 0, 0, 0.5));
+    }
+
+    .lightbox-label {
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.6);
+        text-transform: capitalize;
+        font-weight: 500;
+    }
+
+    .lightbox-close {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: none;
+        background: rgba(255, 255, 255, 0.08);
+        color: rgba(255, 255, 255, 0.6);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s, color 0.2s;
+    }
+
+    .lightbox-close:hover {
+        background: rgba(220, 10, 45, 0.3);
+        color: #fff;
+    }
+
+    .lightbox-close svg {
+        width: 18px;
+        height: 18px;
     }
 
     /* ---- Prev / Next navigation ---- */
@@ -322,6 +557,16 @@ const statConfig = [
     }
 
     /* ---- Responsive ---- */
+    @media (max-width: 768px) {
+        .two-columns {
+            grid-template-columns: 1fr;
+        }
+
+        .info-panel {
+            max-width: 600px;
+        }
+    }
+
     @media (max-width: 480px) {
         .top-bar {
             padding: 0.8rem 1rem;
@@ -350,14 +595,22 @@ const statConfig = [
             font-size: 1.8rem;
         }
 
-        .stat-row,
-        .stat-total {
+        .stat-row {
             grid-template-columns: 75px 35px 1fr;
             gap: 0.5rem;
         }
 
         .stat-label {
             font-size: 0.78rem;
+        }
+
+        .lightbox-content {
+            padding: 1.5rem;
+        }
+
+        .lightbox-content img {
+            max-width: 240px;
+            max-height: 240px;
         }
     }
 </style>

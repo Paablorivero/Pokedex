@@ -8,7 +8,7 @@ interface Props {
 const { pokemon } = Astro.props;
 ---
 
-<a href={`/pokemon/${pokemon.id}`} class="card-link">
+<a href={`/pokemon/${pokemon.id}`} class="card-link" data-name={pokemon.nombre.toLowerCase()} data-gen={pokemon.generation}> 
     <article class="pokemon-card">
         <span class="pokemon-id">#{pokemon.id.toString().padStart(3, '0')}</span>
 
