@@ -1,0 +1,42 @@
+---
+export interface Props {
+	title: string;
+	description?: string;
+}
+
+const {
+	title,
+	description = 'Explora todos los Pokémon con esta Pokédex interactiva.'
+} = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="es">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="description" content={description} />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="generator" content={Astro.generator} />
+		<title>{title}</title>
+	</head>
+	<body>
+		<slot />
+	</body>
+</html>
+
+<style is:global>
+	*, *::before, *::after {
+		box-sizing: border-box;
+		margin: 0;
+		padding: 0;
+	}
+
+	body {
+		font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+		background-color: #f6f8fc;
+		color: #2c3e50;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
+</style>

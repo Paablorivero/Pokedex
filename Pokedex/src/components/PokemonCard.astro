@@ -1,0 +1,161 @@
+---
+import type { Pokemon } from '../types/pokemon';
+
+interface Props {
+    pokemon: Pokemon;
+}
+
+const { pokemon } = Astro.props;
+---
+
+<a href={`/pokemon/${pokemon.id}`} class="card-link">
+    <article class="pokemon-card">
+        <span class="pokemon-id">#{pokemon.id.toString().padStart(3, '0')}</span>
+
+        <div class="sprite-area">
+            <img 
+                src={pokemon.images.back} 
+                alt={pokemon.nombre}
+                class="sprite front"
+                loading="lazy"
+                decoding="async"
+                onerror={`this.src='${pokemon.images.extra_front}'; this.classList.add('fallback');`}
+            />
+            <img 
+                src={pokemon.images.front} 
+                alt={`${pokemon.nombre} espalda`} 
+                class="sprite back"
+                loading="lazy"
+                decoding="async"
+                onerror={`this.style.display='none';`} 
+            />
+        </div>
+
+        <h2 class="pokemon-name">{pokemon.nombre}</h2>
+
+        <span class="view-hint">Ver stats →</span>
+    </article>
+</a>
+
+<style>
+    .card-link {
+        text-decoration: none;
+        color: inherit;
+        display: block;
+        border-radius: 16px;
+        outline-offset: 2px;
+    }
+
+    .card-link:focus-visible {
+        outline: 2px solid #58d0f8;
+    }
+
+    .pokemon-card {
+        background: linear-gradient(145deg, #2a2a4a 0%, #1e1e38 100%);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 16px;
+        padding: 1.2rem 1rem;
+        text-align: center;
+        position: relative;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        overflow: hidden;
+        cursor: pointer;
+    }
+
+    .pokemon-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: #DC0A2D;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+
+    .pokemon-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 25px rgba(220, 10, 45, 0.2);
+        border-color: rgba(220, 10, 45, 0.3);
+    }
+
+    .pokemon-card:hover::before {
+        opacity: 1;
+    }
+
+    .pokemon-id {
+        position: absolute;
+        top: 10px;
+        right: 12px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.25);
+        font-variant-numeric: tabular-nums;
+    }
+
+    .sprite-area {
+        height: 90px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        margin: 0.5rem 0;
+    }
+
+    .sprite {
+        max-height: 100%;
+        max-width: 100%;
+        object-fit: contain;
+        image-rendering: pixelated;
+        position: absolute;
+        transition: opacity 0.3s ease, transform 0.3s ease;
+        filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
+    }
+
+    .sprite.front {
+        opacity: 1;
+        transform: scale(1);
+        z-index: 2;
+    }
+
+    .sprite.back {
+        opacity: 0;
+        transform: scale(0.8);
+        z-index: 1;
+    }
+
+    .pokemon-card:hover .sprite.front {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+
+    .pokemon-card:hover .sprite.back {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    .fallback {
+        image-rendering: auto;
+    }
+
+    .pokemon-name {
+        text-transform: capitalize;
+        font-size: 1rem;
+        margin: 0.6rem 0 0;
+        font-weight: 700;
+        color: #e8e8e8;
+    }
+
+    .view-hint {
+        display: block;
+        margin-top: 0.5rem;
+        font-size: 0.7rem;
+        color: rgba(255, 255, 255, 0.2);
+        transition: color 0.2s ease;
+    }
+
+    .pokemon-card:hover .view-hint {
+        color: #DC0A2D;
+    }
+</style>

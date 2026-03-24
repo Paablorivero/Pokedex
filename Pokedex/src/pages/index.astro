@@ -1,0 +1,220 @@
+---
+// src/pages/index.astro
+import Layout from '../layouts/Layout.astro';
+---
+<Layout title="Bienvenido a la Pokédex">
+    <main class="landing">
+        <div class="bg-pokeballs" aria-hidden="true">
+            <svg class="deco deco-1" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="50" r="48" fill="none" stroke="currentColor" stroke-width="2"/>
+                <line x1="2" y1="50" x2="98" y2="50" stroke="currentColor" stroke-width="2"/>
+                <circle cx="50" cy="50" r="12" fill="none" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            <svg class="deco deco-2" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="50" r="48" fill="none" stroke="currentColor" stroke-width="2"/>
+                <line x1="2" y1="50" x2="98" y2="50" stroke="currentColor" stroke-width="2"/>
+                <circle cx="50" cy="50" r="12" fill="none" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            <svg class="deco deco-3" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="50" r="48" fill="none" stroke="currentColor" stroke-width="2"/>
+                <line x1="2" y1="50" x2="98" y2="50" stroke="currentColor" stroke-width="2"/>
+                <circle cx="50" cy="50" r="12" fill="none" stroke="currentColor" stroke-width="2"/>
+            </svg>
+        </div>
+
+        <div class="hero-content">
+            <div class="pokeball-hero">
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="pokeball-svg">
+                    <path d="M50 2 C24 2 2 24 2 50 H38 C38 43.4 43.4 38 50 38 C56.6 38 62 43.4 62 50 H98 C98 24 76 2 50 2Z" fill="#FF1C1C"/>
+                    <path d="M50 98 C76 98 98 76 98 50 H62 C62 56.6 56.6 62 50 62 C43.4 62 38 56.6 38 50 H2 C2 76 24 98 50 98Z" fill="#fff"/>
+                    <line x1="2" y1="50" x2="38" y2="50" stroke="#333" stroke-width="3"/>
+                    <line x1="62" y1="50" x2="98" y2="50" stroke="#333" stroke-width="3"/>
+                    <circle cx="50" cy="50" r="12" fill="#fff" stroke="#333" stroke-width="4"/>
+                    <circle cx="50" cy="50" r="5" fill="#fff" stroke="#333" stroke-width="2"/>
+                </svg>
+            </div>
+
+            <h1 class="title">
+                <span class="title-poke">Poké</span><span class="title-dex">dex</span>
+            </h1>
+            <p class="subtitle">Explora los <strong>151</strong> Pokémon originales</p>
+
+            <a href="/pokedex" class="btn-start">
+                <span class="btn-text">Abrir Pokédex</span>
+                <svg class="btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                    <polyline points="12 5 19 12 12 19"/>
+                </svg>
+            </a>
+        </div>
+
+        <div class="bottom-fade" aria-hidden="true"></div>
+    </main>
+</Layout>
+
+<style>
+    .landing {
+        position: relative;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+        background:
+            radial-gradient(ellipse at 20% 80%, rgba(255, 28, 28, 0.15) 0%, transparent 50%),
+            radial-gradient(ellipse at 80% 20%, rgba(59, 130, 246, 0.12) 0%, transparent 50%),
+            radial-gradient(ellipse at 50% 50%, rgba(250, 204, 21, 0.06) 0%, transparent 60%),
+            linear-gradient(160deg, #0f0f1a 0%, #1a1025 40%, #10131f 100%);
+    }
+
+    /* ---- Pokeball decorations ---- */
+    .bg-pokeballs {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+    }
+
+    .deco {
+        position: absolute;
+        color: rgba(255, 255, 255, 0.04);
+        animation: spin-slow 90s linear infinite;
+    }
+
+    .deco-1 { width: 500px; top: -120px; right: -100px; }
+    .deco-2 { width: 350px; bottom: -80px; left: -60px; animation-duration: 120s; animation-direction: reverse; }
+    .deco-3 { width: 200px; top: 50%; left: 60%; opacity: 0.5; animation-duration: 70s; }
+
+    @keyframes spin-slow {
+        to { transform: rotate(360deg); }
+    }
+
+    /* ---- Hero content ---- */
+    .hero-content {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 2rem;
+    }
+
+    .pokeball-hero {
+        width: 120px;
+        height: 120px;
+        margin-bottom: 2rem;
+        animation: float 4s ease-in-out infinite;
+        filter: drop-shadow(0 0 30px rgba(255, 28, 28, 0.35));
+    }
+
+    .pokeball-svg {
+        width: 100%;
+        height: 100%;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-14px); }
+    }
+
+    .title {
+        font-size: clamp(3rem, 8vw, 5.5rem);
+        font-weight: 900;
+        margin: 0 0 0.6rem 0;
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+    }
+
+    .title-poke {
+        color: #FF3B3B;
+        text-shadow: 0 0 40px rgba(255, 59, 59, 0.4);
+    }
+
+    .title-dex {
+        color: #ffffff;
+        text-shadow: 0 0 30px rgba(255, 255, 255, 0.15);
+    }
+
+    .subtitle {
+        font-size: clamp(1rem, 2.5vw, 1.3rem);
+        color: rgba(255, 255, 255, 0.55);
+        margin: 0 0 3rem 0;
+        font-weight: 400;
+        line-height: 1.5;
+    }
+
+    .subtitle strong {
+        color: rgba(255, 255, 255, 0.85);
+        font-weight: 600;
+    }
+
+    /* ---- CTA button ---- */
+    .btn-start {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.7rem;
+        background: linear-gradient(135deg, #FF1C1C 0%, #cc0000 100%);
+        color: #fff;
+        text-decoration: none;
+        padding: 1rem 2.4rem;
+        border-radius: 60px;
+        font-size: 1.15rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        transition: transform 0.25s cubic-bezier(.4,0,.2,1),
+                    box-shadow 0.25s cubic-bezier(.4,0,.2,1);
+        box-shadow:
+            0 4px 20px rgba(255, 28, 28, 0.4),
+            0 0 60px rgba(255, 28, 28, 0.15);
+    }
+
+    .btn-start:hover {
+        transform: translateY(-3px) scale(1.03);
+        box-shadow:
+            0 8px 30px rgba(255, 28, 28, 0.55),
+            0 0 80px rgba(255, 28, 28, 0.25);
+    }
+
+    .btn-start:active {
+        transform: translateY(0) scale(0.98);
+    }
+
+    .btn-arrow {
+        width: 20px;
+        height: 20px;
+        transition: transform 0.25s ease;
+    }
+
+    .btn-start:hover .btn-arrow {
+        transform: translateX(4px);
+    }
+
+    /* ---- Bottom gradient fade ---- */
+    .bottom-fade {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 120px;
+        background: linear-gradient(to top, rgba(15, 15, 26, 0.8), transparent);
+        pointer-events: none;
+    }
+
+    /* ---- Responsive ---- */
+    @media (max-width: 480px) {
+        .pokeball-hero {
+            width: 90px;
+            height: 90px;
+            margin-bottom: 1.5rem;
+        }
+
+        .btn-start {
+            padding: 0.9rem 2rem;
+            font-size: 1rem;
+        }
+
+        .deco-1 { width: 300px; }
+        .deco-2 { width: 200px; }
+        .deco-3 { display: none; }
+    }
+</style>

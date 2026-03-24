@@ -1,0 +1,78 @@
+---
+// Splash screen con animación de Pokeball al cargar la página.
+// El contenido se renderiza debajo (SSG) — el splash solo lo tapa visualmente.
+// Al terminar la animación, el splash se retira y el contenido ya está listo.
+---
+
+<div id="splash-screen" class="splash-container">
+    <svg id="pokeball" class="pokeball-icon spinning" viewBox="0 0 100 100" width="100" height="100" xmlns="http://www.w3.org/2000/svg">
+        <path d="M50 5 C25.1 5 5 25.1 5 50 H95 C95 25.1 74.9 5 50 5 Z" fill="#FF1C1C"/>
+        <path d="M50 95 C74.9 95 95 74.9 95 50 H5 C5 74.9 25.1 95 50 95 Z" fill="#FFFFFF" stroke="#333" stroke-width="2"/>
+        <rect x="5" y="47" width="90" height="6" fill="#333"/>
+        <circle cx="50" cy="50" r="12" fill="#FFFFFF" stroke="#333" stroke-width="6"/>
+        <circle cx="50" cy="50" r="6" fill="#FFFFFF" stroke="#333" stroke-width="2"/>
+    </svg>
+</div>
+
+<script>
+    function dismissSplash() {
+        const splash = document.getElementById('splash-screen');
+        const ball = document.getElementById('pokeball');
+        if (!splash || !ball) return;
+
+        ball.classList.remove('spinning');
+        ball.classList.add('zoom-out');
+
+        setTimeout(() => splash.classList.add('hide'), 800);
+        setTimeout(() => splash.remove(), 1400);
+    }
+
+    if (document.readyState === 'complete') {
+        dismissSplash();
+    } else {
+        window.addEventListener('load', dismissSplash);
+    }
+</script>
+
+<style>
+    .splash-container {
+        position: fixed;
+        inset: 0;
+        background-color: #1a1a1a;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        transition: opacity 0.5s ease-out;
+    }
+
+    .splash-container.hide {
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .pokeball-icon {
+        width: 100px;
+        height: 100px;
+        filter: drop-shadow(0 0 15px rgba(255, 28, 28, 0.5));
+    }
+
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    .pokeball-icon.spinning {
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes pulseAndExplode {
+        0% { transform: scale(1); opacity: 1; }
+        30% { transform: scale(0.8); opacity: 1; }
+        100% { transform: scale(5); opacity: 0; filter: blur(5px); }
+    }
+
+    .pokeball-icon.zoom-out {
+        animation: pulseAndExplode 1s ease-in forwards;
+    }
+</style>
