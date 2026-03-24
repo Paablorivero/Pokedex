@@ -14,9 +14,9 @@ export const  PokeService = {
     IMAGEN_EXTRA_FRONT: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/',
 
     async getPokedex(): Promise<Pokemon[]> {
-        const totalPokemons = 151;
+        const totalPokemons = 1350;
         const pokemons: Pokemon[] = [];
-        const chunkSize = 50;//He aumentado la carga para que sea mas rapido
+        const chunkSize = 250;//He aumentado la carga para que sea mas rapido
 
         console.log(`Iniciando descarga de ${totalPokemons} Pokémon por lotes... `);
 
